@@ -38,8 +38,8 @@ int main(int argc, char** argv){
     double matrix[attributesNum][trainingNums];
     double priceVector[trainingNums];
     double temp = 0.0;
-    for (size_t i = 0; i < trainingNums; i++) {
-      for (size_t j = 0; j < attributesNum; j++) {
+    for (size_t i = 0; i < attributesNum; i++) {
+      for (size_t j = 0; j < trainingNums; j++) {
         printf("%s", "Num: ");
         fscanf(fp, "%lf%*c", &matrix[i][j]);
         printf("%lf\n", matrix[i][j]);
