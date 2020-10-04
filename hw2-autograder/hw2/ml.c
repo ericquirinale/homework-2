@@ -21,7 +21,9 @@
 double** multiplyMatrix(double **matA, double **matB, int r1, int c1, int r2, int c2);
 double** transposeMatrix(double** mat, int row, int col);
 double** inverseMatrix(double **matA, int dimension);
-
+double* multRow(double *matMult, double scalar, int dimension);
+double* addRow(double *matAdd, double *matAdd2, int dimension);
+double* subRow(double *matSub, double *matSub2, int dimension);
 // main method starts here
 int main(int argc, char** argv){
 
@@ -39,27 +41,45 @@ int main(int argc, char** argv){
     for (size_t i=0; i<trainingNums; i++){
       matrix[i] = (double *)calloc(attributesNum, sizeof(double));
     }
-    double *priceVector = (double *)calloc(trainingNums, sizeof(double));
+    double **result = (double **)calloc(trainingNums, sizeof(double *));
+    for (size_t i=0; i<trainingNums; i++){
+      result[i] = (double *)calloc(attributesNum, sizeof(double));
+    }
+    double **temp = (double **)calloc(trainingNums, sizeof(double *));
+    for (size_t i=0; i<trainingNums; i++){
+      temp[i] = (double *)calloc(attributesNum, sizeof(double));
+    }
+    double **priceVector = (double **)calloc(trainingNums, sizeof(double));
+    for (size_t i=0; i<trainingNums; i++){
+      temp[i] = (double *)calloc(1, sizeof(double));
+    }
+
+    //fill the matrix and pricevector with data from input
     for (size_t i = 0; i < trainingNums; i++) {
       for (size_t j = 0; j < attributesNum; j++) {
         //printf("%s", "Num: ");
         fscanf(fp, "%lf%*c", &matrix[i][j]);
         //printf("%lf\t", matrix[i][j]);
       }
-      fscanf(fp, "%lf\n", &priceVector[i]);
+      fscanf(fp, "%lf\n", &priceVector[i][0]);
       /*printf("%s\t", "Price: ");
       printf("%lf\n", priceVector[i]);
       printf("%s\n", "New Line: ");*/
     }
-  }
-  for (size_t i=0; i<trainingNums; i++){
-    free(matrix[i]);
-  }
+
+    result = transposeMatrix(matrix, trainingNums, attributesNum);
+    result = multiplyMatrix(result, matrix, attributesNum, trainingNums, trainingNums, attributesNum);
+    result = inverseMatrix(result, attributesNum);
+    temp = transposeMatrix(matrix, trainingNums, attributesNum);
+    result = multiplyMatrix(result, temp, attributesNum, attributesNum, attributesNum, trainingNums);
+    result = multiplyMatrix(result, priceVector, attributesNum, attributesNum, trainingNums, 1);
+
   for (size_t i=0; i<trainingNums; i++){
     free(matrix[i]);
   }
   free(matrix);
   free(priceVector);
+  }
 	return 0;
 }
 
@@ -83,7 +103,6 @@ double** multiplyMatrix(double **matA, double **matB, int r1, int c1, int r2, in
 
 double** transposeMatrix(double** mat, int row, int col)
 {
-
 	double** matTran=malloc(col*sizeof(double*));
   for (size_t i=0; i<row; i++){
     matTran[i] = (double *)calloc(row, sizeof(double));
@@ -98,13 +117,38 @@ double** transposeMatrix(double** mat, int row, int col)
     return matTran;
 }
 
+double* multRow(double *matMult, double scalar, int dimension){
+  double* temp = calloc(dimension, sizeof(double));
+  for (size_t i = 0; i < dimension; i++) {
+    temp[i] = matMult[i]*scalar;
+  }
+  return temp;
+}
+
+double* addRow(double *matAdd, double *matAdd2, int dimension){
+  double* temp = calloc(dimension, sizeof(double));
+  for (size_t i = 0; i < dimension; i++) {
+    temp[i] = matAdd[i] + matAdd2[i];
+  }
+  return temp;
+}
+
+double* subRow(double *matSub, double *matSub2, int dimension){
+  double* temp = calloc(dimension, sizeof(double));
+  for (size_t i = 0; i < dimension; i++) {
+    temp[i] = matSub[i] - matSub2[i];
+  }
+  return temp;
+}
+
 double** inverseMatrix(double **matA, int dimension)
 {
-
     double** matI=malloc(dimension*sizeof(double*));
     for (size_t i=0; i<dimension; i++){
       matI[i] = (double *)calloc(dimension, sizeof(double));
     }
+
+    //set matI to identity
     for (size_t i = 0; i < dimension; i++) {
       for (size_t j = 0; j < dimension; j++) {
         if(i==j){
@@ -116,9 +160,29 @@ double** inverseMatrix(double **matA, int dimension)
       }
     }
 
-    for (size_t i = 0; i < dimension-1; i++) {
-      matI[i][i] =
+    double f;
+    double* temp;
+    double* temp2;
+    for (size_t p = 0; p < dimension-1; p++) {
+      f = matA[p][p];
+      matA[p] = multRow(matA[p], 1.0/f, dimension);
+      matI[p] = multRow(matI[p], 1.0/f, dimension);
+      for (size_t i = p+1; i < dimension-1; i++) {
+        f = matA[i][p];
+        temp = multRow(matA[p], f, dimension);
+        temp2 = multRow(matI[p], f, dimension);
+        matA[i] = subRow(matA[i], temp, dimension);
+        matI[i] = subRow(matI[i], temp2, dimension);
+      }
     }
-
+    for (size_t p = dimension-1; p > 0; p--) {
+      for (size_t i = p-1; i > 0; i--) {
+        f = matA[i][p];
+        temp = multRow(matA[p], f, dimension);
+        temp2 = multRow(matI[p], f, dimension);
+        matA[i] = subRow(matA[i], temp, dimension);
+        matI[i] = subRow(matI[i], temp2, dimension);
+      }
+    }
 	return matI;
 }
