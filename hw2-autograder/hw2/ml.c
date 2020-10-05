@@ -33,10 +33,12 @@ int main(int argc, char** argv){
   }
   else{
     FILE* fp = fopen(filename, "r");
+    //rows
     int attributesNum;
+    //columns
     int trainingNums;
     fscanf(fp, "%d\t%d\n", &attributesNum, &trainingNums);
-    //printf("%d\n%d\n", attributesNum, trainingNums);
+    printf("%d\n%d\n", attributesNum, trainingNums);
     double **matrix = (double **)calloc(trainingNums, sizeof(double *));
     for (size_t i=0; i<trainingNums; i++){
       matrix[i] = (double *)calloc(attributesNum, sizeof(double));
@@ -51,9 +53,8 @@ int main(int argc, char** argv){
     }
     double **priceVector = (double **)calloc(trainingNums, sizeof(double));
     for (size_t i=0; i<trainingNums; i++){
-      temp[i] = (double *)calloc(1, sizeof(double));
+      priceVector[i] = (double *)calloc(1, sizeof(double));
     }
-
     //fill the matrix and pricevector with data from input
     for (size_t i = 0; i < trainingNums; i++) {
       for (size_t j = 0; j < attributesNum; j++) {
@@ -61,9 +62,10 @@ int main(int argc, char** argv){
         fscanf(fp, "%lf%*c", &matrix[i][j]);
         //printf("%lf\t", matrix[i][j]);
       }
+
       fscanf(fp, "%lf\n", &priceVector[i][0]);
       /*printf("%s\t", "Price: ");
-      printf("%lf\n", priceVector[i]);
+      printf("%lf\n", priceVector[i][0]);
       printf("%s\n", "New Line: ");*/
     }
 
@@ -73,6 +75,10 @@ int main(int argc, char** argv){
     temp = transposeMatrix(matrix, trainingNums, attributesNum);
     result = multiplyMatrix(result, temp, attributesNum, attributesNum, attributesNum, trainingNums);
     result = multiplyMatrix(result, priceVector, attributesNum, attributesNum, trainingNums, 1);
+
+    for (size_t i = 0; i < trainingNums; i++) {
+      printf("%0.01f\n", result[i][0]);
+    }
 
   for (size_t i=0; i<trainingNums; i++){
     free(matrix[i]);
